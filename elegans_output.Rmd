@@ -1,0 +1,163 @@
+---
+title: "Lab Notebook"
+author: "Emily Jane Dennis"
+date: "3/10/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## lab notebook in Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+```{r loadinglibs}
+#load libraries
+library(ggplot2)
+library(ggthemes)
+
+allbeh <- read.csv('~/Desktop/elegans_manuscript/2017_elegans_allbehavior.csv',sep="\t")
+#only keep one observation per plate
+l = length(allbeh[,1])/6
+allbeh <- allbeh[1:l*6,]
+
+#remove plates with too few or too many animals
+allbeh <- subset(allbeh,sum>49)
+allbeh <- subset(allbeh,sum<251)
+
+#reformat the columns that are factors but should be numeric
+allbeh$CI <- as.numeric(as.character(allbeh$CI))
+allbeh$sum <- as.numeric(as.character(allbeh$sum))
+hawaiian <- subset(allbeh,expt=='hawaiian')
+hawaiian <- subset(hawaiian,genotype!='ewIR69')
+hawaiiane <- subset(hawaiian,percentDEET==0)
+hawaiiane <- subset(hawaiiane,date!=20160920)
+hawaiiand <- subset(hawaiian,percentDEET==0.15)
+#hawaiiand didn't have any positive controls that
+#'worked'/ had enough responding animals to record
+#so I excluded the day
+hawaiiand <- subset(hawaiiand,date!=20160920)
+#I started collecting data from ewIR69 but stopped
+#based on conversation with collaborators and
+#Kammenga data indicating ewIR69 has altered CTX
+hawaiiand <- subset(hawaiiand,genotype!='ewIR69')
+
+
+```
+
+define the function n_fun
+```{r}
+ n_fun <- function(x){  return(data.frame(y = median(x), label = paste0(" ",length(x))))}
+```
+
+
+```{r plot}
+
+ggplot(hawaiiand,aes(x=genotype,y=CI)) + ggtitle('hawaiian deet') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+
+```
+
+Below find the stats for these hawaiian deet plate data
+
+```{r stats}
+
+TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiand))
+
+```
+
+
+```{r plotforhawaiianethanol}
+ggplot(hawaiiane,aes(x=genotype,y=CI)) + ggtitle('hawaiian ethanol') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+```
+
+Below find the stats for these hawaiian ethanol plate data
+
+```{r statsforhawaiianethanol}
+
+TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiane))
+```
+
+
+
+```{r plotfordrcN2}
+drc <- subset(allbeh,expt=='drc')
+drc <- subset(drc,percentDEET<0.2)
+drcN2 <- subset(drc,genotype=='N2')
+
+ggplot(drcN2,aes(x=as.factor(percentDEET),y=CI)) + ggtitle('dose response curve') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+```
+
+Below find the stats for these dose response data
+
+```{r statsfordrcN2}
+
+TukeyHSD(aov(formula = CI ~ as.factor(percentDEET), data = drcN2))
+```
+
+
+
+## odr1 data
+#the purpose of the following experiment is to test if removing AWC function during diacetyl chemotaxis changes
+it does not seem that the potential AWC response to diacetyl is inhibiting the AWA attraction
+
+```{r}
+model <- subset(allbeh,expt=='model')
+odr1 <- subset(gpcr,genotype=='odr1')
+modelDEET <- subset(model,percentDEET==0.15)
+modelDEETdia <- subset(modelDEET,stimulus=='diacetyl')
+ggplot(modelDEETdia,aes(x=genotype,y=CI)) + ggtitle('DEET diacetyl') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+
+```
+
+Below find the stats for these gpcr DEET plate data
+
+```{r statsforhawaiianethanol}
+
+TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiane))
+```
+
+
+
+
+
+
+
+
+```{r}
+
+odor <- subset(allbeh,expt=='odor')
+odorDEET <- subset(odor,percentDEET==0.15)
+odoretoh <- subset(odor,percentDEET==0)
+ggplot(odorDEET,aes(x=stimulus,y=CI)) + ggtitle('odors on DEET') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+```
+
+```{r}
+ggplot(odoretoh,aes(x=stimulus,y=CI)) + ggtitle('odors on etoh') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+```
+
+
+
+```{r}
+
+rescue <- subset(allbeh,expt=='rescue')
+```
+
+```{r}
+
+screen <- subset(allbeh,expt=='screen')
+```
+
+
+```{r}
+
+spots <- subset(allbeh,expt=='spots')
+
+```
+
+
+
+
+
+## to do: connect to git
