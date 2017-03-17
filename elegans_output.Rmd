@@ -74,12 +74,15 @@ EE <- subset(spots,stimulus=="EE")
 DD <- subset(spots,stimulus=="DD")
 t.test(x=EE$CI,y=DD$CI,"two.sided")
 
+IDI <- subset(spots,stimulus=="IDI")
+ISI <- subset(spots,stimulus=="ISI")
+t.test(x=ISI$CI,y=IDI$CI,"two.sided")
+
 ```
 
 
 
 ```{r plotscreen}
-
 ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
 
 ```
