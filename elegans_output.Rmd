@@ -1,7 +1,7 @@
 ---
 title: "Lab Notebook"
 author: "Emily Jane Dennis"
-date: "3/10/2017"
+date: "3/17/2017"
 output: pdf_document
 ---
 
@@ -9,9 +9,14 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+##what did I do today?
+made a to do list:
+1. find N2 plate experiments from pre-spreadsheet era (on/off 0.15% DEET) OR change this Fig 1 observation to dose response curve (maybe logic flow should be: 1. DEET is NOT spot-effective 2. drc IN AGAROSE 3. screen...)
+2. add stats for spots data and drc if added
+
 ## lab notebook in Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+This is an R Markdown document.  <http://rmarkdown.rstudio.com>.
 
 ```{r loadinglibs}
 #load libraries
@@ -43,7 +48,11 @@ hawaiiand <- subset(hawaiiand,date!=20160920)
 #based on conversation with collaborators and
 #Kammenga data indicating ewIR69 has altered CTX
 hawaiiand <- subset(hawaiiand,genotype!='ewIR69')
-
+rescue <- subset(allbeh,expt=='rescue')
+rescueE <- subset(rescue,percentDEET==0)
+rescueD <- subset(rescue,percentDEET==0.15)
+spots <- subset(allbeh,expt=='spots')
+screen <- subset(allbeh,expt=='screen')
 
 ```
 
@@ -53,7 +62,41 @@ define the function n_fun
 ```
 
 
-```{r plot}
+```{r plotstim}
+
+ggplot(spots,aes(x=stimulus,y=CI)) + ggtitle('spots data') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+
+```
+
+#consider moving drc just after this, adding means to plots
+```{r statsforfig1a}
+EE <- subset(spots,stimulus=="EE")
+DD <- subset(spots,stimulus=="DD")
+t.test(x=EE$CI,y=DD$CI,"two.sided")
+
+```
+
+
+
+```{r plotscreen}
+
+ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+
+```
+
+#add to this spreadsheet still missing some screen data points from pre-awesome collection era
+
+```{r plotdeleted}
+
+#ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+
+```
+
+#add to this spreadsheet these data from pre-awesome collection era
+
+#add to this spreadsheet the ADL::TeTX, crispr, and N2 data
+
+```{r plothawaiiandeet}
 
 ggplot(hawaiiand,aes(x=genotype,y=CI)) + ggtitle('hawaiian deet') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
 
@@ -74,7 +117,7 @@ ggplot(hawaiiane,aes(x=genotype,y=CI)) + ggtitle('hawaiian ethanol') + geom_boxp
 
 Below find the stats for these hawaiian ethanol plate data
 
-```{r statsforhawaiianethanol}
+```{r statsforhawaiianethanol2}
 
 TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiane))
 ```
@@ -104,7 +147,7 @@ it does not seem that the potential AWC response to diacetyl is inhibiting the A
 
 ```{r}
 model <- subset(allbeh,expt=='model')
-odr1 <- subset(gpcr,genotype=='odr1')
+odr1 <- subset(model,genotype=='odr1')
 modelDEET <- subset(model,percentDEET==0.15)
 modelDEETdia <- subset(modelDEET,stimulus=='diacetyl')
 ggplot(modelDEETdia,aes(x=genotype,y=CI)) + ggtitle('DEET diacetyl') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
