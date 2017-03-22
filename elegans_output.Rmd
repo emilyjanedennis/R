@@ -1,7 +1,7 @@
 ---
 title: "Lab Notebook"
 author: "Emily Jane Dennis"
-date: "3/17/2017"
+date: "3/22/2017"
 output: pdf_document
 ---
 
@@ -11,8 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ##what did I do today?
 made a to do list:
-1. find N2 plate experiments from pre-spreadsheet era (on/off 0.15% DEET) OR change this Fig 1 observation to dose response curve (maybe logic flow should be: 1. DEET is NOT spot-effective 2. drc IN AGAROSE 3. screen...)
-2. add stats for spots data and drc if added
+1. read a LOT about means/ANOVAs. made qqPlots for DEET data and saw most were within 95% confidence interval and therefore is reasonable to assume residuals are normally distributed (assumption for ANOVA)
 
 ## lab notebook in Markdown
 
@@ -22,6 +21,7 @@ This is an R Markdown document.  <http://rmarkdown.rstudio.com>.
 #load libraries
 library(ggplot2)
 library(ggthemes)
+library(car)
 
 allbeh <- read.csv('~/Desktop/elegans_manuscript/2017_elegans_allbehavior.csv',sep="\t")
 #only keep one observation per plate
@@ -40,10 +40,12 @@ hawaiian <- subset(hawaiian,genotype!='ewIR69')
 hawaiiane <- subset(hawaiian,percentDEET==0)
 hawaiiane <- subset(hawaiiane,date!=20160920)
 hawaiiand <- subset(hawaiian,percentDEET==0.15)
+
 #hawaiiand didn't have any positive controls that
 #'worked'/ had enough responding animals to record
-#so I excluded the day
+#so I excluded the day. temp in lab was also low that day.
 hawaiiand <- subset(hawaiiand,date!=20160920)
+
 #I started collecting data from ewIR69 but stopped
 #based on conversation with collaborators and
 #Kammenga data indicating ewIR69 has altered CTX
@@ -56,7 +58,7 @@ screen <- subset(allbeh,expt=='screen')
 
 ```
 
-define the function n_fun
+define the function n_fun which labels each plot with Ns
 ```{r}
  n_fun <- function(x){  return(data.frame(y = median(x), label = paste0(" ",length(x))))}
 ```
@@ -90,8 +92,8 @@ ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outl
 #add to this spreadsheet still missing some screen data points from pre-awesome collection era
 
 ```{r plotdeleted}
-
-#ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+#test <- ddply(hawaiiane,c("genotype"),summarise,N=length(genotype),mean=mean(CI),sd=sd(CI),se=sd/sqrt(N))
+#ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(data=test,aes(x=genotype,y=mean)) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
 
 ```
 
@@ -99,9 +101,19 @@ ggplot(screen,aes(x=genotype,y=CI)) + ggtitle('screen data') + geom_boxplot(outl
 
 #add to this spreadsheet the ADL::TeTX, crispr, and N2 data
 
-```{r plothawaiiandeet}
+qqPlot for these data to test if residuals are roughly normal and an ANOVA is appropriate. 
 
-ggplot(hawaiiand,aes(x=genotype,y=CI)) + ggtitle('hawaiian deet') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+Dashed lines on the plot indicate 95% confidence interval. ewIR76 has one outlier which is evident in both the plotted data and in the residuals and lays outside the CI. 
+```{r plothawaiiandeetstats}
+
+qqPlot(hawaiiand$CI)
+
+```
+
+```{r plothawaiiandeet}
+test <- ddply(hawaiiand,c("genotype"),summarise,N=length(genotype),mean=mean(CI),sd=sd(CI),se=sd/sqrt(N))
+
+ggplot(hawaiiand,aes(x=genotype,y=CI)) + ggtitle('hawaiian deet') + geom_boxplot(data=test,aes(x=genotype,y=mean)) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
 
 ```
 
@@ -115,7 +127,10 @@ TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiand))
 
 
 ```{r plotforhawaiianethanol}
-ggplot(hawaiiane,aes(x=genotype,y=CI)) + ggtitle('hawaiian ethanol') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+
+test <- ddply(hawaiiane,c("genotype"),summarise,N=length(genotype),mean=mean(CI),sd=sd(CI),se=sd/sqrt(N))
+
+ggplot(hawaiiane,aes(x=genotype,y=CI)) + ggtitle('hawaiian ethanol') + geom_boxplot(test,aes(x=genotype,y=mean)) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
 ```
 
 Below find the stats for these hawaiian ethanol plate data
@@ -124,7 +139,6 @@ Below find the stats for these hawaiian ethanol plate data
 
 TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiane))
 ```
-
 
 
 ```{r plotfordrcN2}
@@ -140,6 +154,9 @@ Below find the stats for these dose response data
 ```{r statsfordrcN2}
 
 TukeyHSD(aov(formula = CI ~ as.factor(percentDEET), data = drcN2))
+
+qqPlot(drcN2$CI)
+
 ```
 
 
@@ -147,6 +164,8 @@ TukeyHSD(aov(formula = CI ~ as.factor(percentDEET), data = drcN2))
 ## odr1 data
 #the purpose of the following experiment is to test if removing AWC function during diacetyl chemotaxis changes
 it does not seem that the potential AWC response to diacetyl is inhibiting the AWA attraction
+
+
 
 ```{r}
 model <- subset(allbeh,expt=='model')
@@ -158,11 +177,15 @@ ggplot(modelDEETdia,aes(x=genotype,y=CI)) + ggtitle('DEET diacetyl') + geom_boxp
 ```
 
 Below find the stats for these gpcr DEET plate data
+```{r plotmodelstats}
 
-```{r statsforhawaiianethanol}
+qqPlot(modelDEETdia$CI)
 
-TukeyHSD(aov(formula = CI ~ genotype, data = hawaiiane))
+TukeyHSD(aov(formula = CI ~ genotype, data = modelDEETdia))
 ```
+
+
+
 
 
 
@@ -177,6 +200,14 @@ odor <- subset(allbeh,expt=='odor')
 odorDEET <- subset(odor,percentDEET==0.15)
 odoretoh <- subset(odor,percentDEET==0)
 ggplot(odorDEET,aes(x=stimulus,y=CI)) + ggtitle('odors on DEET') + geom_boxplot(outlier.shape=NA,coef=0) + geom_jitter(width=0.2,height=0) + theme_tufte() + ylim(-1,1) + geom_hline(yintercept=0) + stat_summary(fun.data = n_fun,geom='text',position='fill',aes(ymax=.99,ymin=0.98))
+```
+
+IAA has three outliers, otherwise the residuals are distributed normally. These outliers decrease the power to find a difference, therefore I am not concerned about this.
+
+```{r}
+qqPlot(odorDEET$CI)
+
+TukeyHSD(aov(formula = CI ~ stimulus, data = odorDEET))
 ```
 
 ```{r}
